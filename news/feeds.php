@@ -21,7 +21,7 @@ require '../inc_0700/config_inc.php'; #provides configuration, pathing, error ha
 // date_format(s.DateAdded, '%W %D %M %Y %H:%i') 'DateAdded' from "
 // . PREFIX . "surveys s, " . PREFIX . "Admin a where s.AdminID=a.AdminID order by s.DateAdded desc";
 
-$sql = "select Title, CategoryID, Description from Categories";
+$sql = "select FeedID, FeedName, FeedLink from Feeds";
 
 #Fills <title> tag. If left empty will default to $PageTitle in config_inc.php  
 $config->titleTag = 'Surveys made with love & PHP in Seattle';
@@ -67,51 +67,27 @@ $sql = $myPager->loadSQL($sql);  #load SQL, add offset
 # connection comes first in mysqli (improved) function
 $result = mysqli_query(IDB::conn(),$sql) or die(trigger_error(mysqli_error(IDB::conn()), E_USER_ERROR));
 
+$url = 'http://'.$_SERVER['HTTP_HOST'].''.$_SERVER['REQUEST_URI'].'';
+
+$i = substr($url, -1);
 
 if(mysqli_num_rows($result) > 0)
 {#records exist - process
+	while($row = mysqli_fetch_assoc($result)){
+		if($i == ((int)$row['FeedID']))
+		{
+			$request = ''.dbOut($row['FeedLink']).'';
+			$response = file_get_contents($request);
+			$xml = simplexml_load_string($response);
+			print '<h1>' . $xml->channel->title . '</h1>';
+			foreach($xml->channel->item as $story)
+			{
+				echo '<a href="' . $story->link . '">' . $story->title . '</a><br />'; 
+				echo '<p>' . $story->description . '</p><br /><br />';
+			}
 
-	$request = "https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml";
-	$response = file_get_contents($request);
-	$xml = simplexml_load_string($response);
-	print '<h1>' . $xml->channel->title . '</h1>';
-	foreach($xml->channel->item as $story)
-	{
-	  echo '<a href="' . $story->link . '">' . $story->title . '</a><br />'; 
-	  echo '<p>' . $story->description . '</p><br /><br />';
+		}
 	}
-
-	// if($myPager->showTotal()==1){$itemz = "survey";}else{$itemz = "surveys";}  //deal with plural
-    
-	// echo '
-	// 	<table class="table table-hover">
-	// 	<thead>
-	// 	<tr>
-	// 		<th scope="col">Title</th>
-	// 		<th scope="col">Description</th>
-	// 	</tr>
-	// 	</thead>
-	// 	<tbody>  
-	// ';	
-	
-	// echo '<div align="center">We have ' . $myPager->showTotal() . ' ' . $itemz . '!</div>';
-	// while($row = mysqli_fetch_assoc($result))
-	// {# process each row
-    //      //echo '<div align="center"><a href="' . VIRTUAL_PATH . 'surveys/survey_view.php?id=' . (int)$row['SurveyID'] . '">' . dbOut($row['Title']) . '</a>';
-    //      //echo '</div>';
-	// 	echo '
-	// 		<tr>
-	// 		<th><a href="' . VIRTUAL_PATH . 'news/news_view.php?id=' . (int)$row['CategoryID'] . '">' . dbOut($row['Title']) . '</a></th>
-	// 		<td>' . dbOut($row['Description']) . '</td>
-	// 		</tr>
-	// 	';
-	// }
-
-	// echo '
-	// 		</tbody>
-	// 	</table>	
-	// ';
-	// echo $myPager->showNAV(); # show paging nav, only if enough records	 
 }else{#no records
     echo "<div align=center>What! No muffins?  There must be a mistake!!</div>";	
 }

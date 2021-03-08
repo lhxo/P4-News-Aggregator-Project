@@ -84,16 +84,24 @@ if(mysqli_num_rows($result) > 0)
 	';	
 	
 	echo '<div align="center">We have ' . $myPager->showTotal() . ' ' . $itemz . '!</div>';
-	while($row = mysqli_fetch_assoc($result))
-	{# process each row
-         //echo '<div align="center"><a href="' . VIRTUAL_PATH . 'surveys/survey_view.php?id=' . (int)$row['SurveyID'] . '">' . dbOut($row['Title']) . '</a>';
-         //echo '</div>';
-		echo '
-			<tr>
-			<th><a href="' . VIRTUAL_PATH . 'news/news_feed.php?id=' . (int)$row['FeedID'] . '">' . dbOut($row['FeedName']) . '</a></th>
-			<td>' . dbOut($row['FeedLink']) . '</td>
-			</tr>
-		';
+
+	while($row = mysqli_fetch_assoc($result)){
+		
+		$url = 'http://'.$_SERVER['HTTP_HOST'].''.$_SERVER['REQUEST_URI'].'';
+
+		$i = substr($url, -1);
+
+		if( $i == ((int)$row['CategoryID']))
+		{
+			echo '
+				<tr>
+				<th><a href="' . VIRTUAL_PATH . 'news/feeds.php?id=' . (int)$row['FeedID'] . '">' . dbOut($row['FeedName']) . '</a></th>
+				<td>' . dbOut($row['FeedLink']) . '</td>
+				</tr>
+			';
+			
+		}
+
 	}
 
 	echo '
